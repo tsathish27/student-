@@ -7,8 +7,16 @@ export function showToast(message, type = 'error') {
   window.dispatchEvent(event);
 }
 
+export function joinUrls(base, path) {
+  // Remove trailing slashes from base and leading slashes from path
+  const cleanBase = base.replace(/\/+$/, '');
+  const cleanPath = path.replace(/^\/+/, '');
+  return `${cleanBase}/${cleanPath}`;
+}
+
 export async function apiRequest(endpoint, options = {}) {
-  const url = `${config.API_BASE_URL}${endpoint}`;
+  const url = joinUrls(config.API_BASE_URL, endpoint);
+  console.log('API Request:', { url, endpoint, baseUrl: config.API_BASE_URL });
   const token = localStorage.getItem('token');
   const headers = {
     'Content-Type': 'application/json',
