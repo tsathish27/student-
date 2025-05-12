@@ -1,0 +1,51 @@
+services:
+  - type: web
+    name: student-management-backend
+    env: node
+    build:
+      buildCommand: cd backend && npm install
+      startCommand: cd backend && node app.js
+    envVars:
+      - key: NODE_VERSION
+        value: 18.x
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      # Add other environment variables from your .env file here
+      - key: MONGO_URI
+        fromDatabase:
+          name: mongodb
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: EMAIL_SERVICE
+        value: gmail
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+
+  - type: web
+    name: student-management-frontend
+    env: node
+    build:
+      buildCommand: cd frontend && npm install && npm run build
+      staticPath: frontend/build
+      staticOptions:
+        skipBuild: true
+    envVars:
+      - key: NODE_VERSION
+        value: 18.x
+      - key: PORT
+        value: 10001
+      - key: NODE_ENV
+        value: production
+      - key: REACT_APP_API_URL
+        value: https://student-management-backend.onrender.com
+
+databases:
+  - name: mongodb
+    databaseName: SMS
+    user: durgaprasad10451718
+    plan: free
