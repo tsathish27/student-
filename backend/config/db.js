@@ -2,15 +2,20 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
+    console.log('Attempting to connect to MongoDB...');
+    
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-      family: 4 // Use IPv4, skip trying IPv6
+      serverSelectionTimeoutMS: 30000, // Increase timeout to 30s
+      socketTimeoutMS: 45000,
+      family: 4,
+      connectTimeoutMS: 30000,
+      retryWrites: true,
+      w: 'majority'
     });
     
-    console.log('MongoDB connected successfully');
+    console.log('MongoDB connected successfully to:', conn.connection.host);
   } catch (err) {
     console.error('MongoDB connection error:', err);
     console.log('Please make sure:');
@@ -20,18 +25,5 @@ const connectDB = async () => {
     process.exit(1);
   }
 };
-
-// Handle MongoDB connection events
-mongoose.connection.on('error', err => {
-  console.error('MongoDB connection error:', err);
-});
-
-mongoose.connection.on('disconnected', () => {
-  console.log('MongoDB disconnected');});
-
-process.on('SIGINT', async () => {
-  await mongoose.connection.close();
-  process.exit(0);
-});
 
 module.exports = connectDB;

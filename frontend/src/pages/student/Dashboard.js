@@ -132,3 +132,166 @@ export default function StudentDashboard() {
     </div>
   );
 }
+// import React, { useEffect, useState } from 'react';
+// import { apiRequest } from '../../api';
+// import { useAuth } from '../../context/AuthContext';
+// import DashboardCard from './DashboardCards';
+
+// export default function StudentDashboard() {
+//   const { user } = useAuth();
+//   const [summary, setSummary] = useState({
+//     marks: 0,
+//     attendance: 0,
+//     quizzes: 0,
+//     reports: 0,
+//     notifications: 0
+//   });
+//   const [studentName, setStudentName] = useState('');
+//   const [loading, setLoading] = useState(false);
+//   const [partialError, setPartialError] = useState(false);
+
+//   useEffect(() => {
+//     if (!user || !user._id) return;
+//     setLoading(true);
+//     setPartialError(false);
+
+//     apiRequest('/student/my')
+//       .then(student => {
+//         if (!student || !student._id) throw new Error('Student profile not found');
+//         setStudentName(student.userId?.name || user.name || 'Student');
+
+//         return Promise.allSettled([
+//           apiRequest(`/marks/${student._id}`),
+//           Promise.all([
+//             (async () => {
+//               try {
+//                 return user.studentId
+//                   ? await apiRequest(`/attendance/my/summary?semester=sem1`)
+//                   : await apiRequest(`/attendance/${student._id}/summary?semester=sem1`);
+//               } catch {
+//                 return { summary: [] };
+//               }
+//             })(),
+//             (async () => {
+//               try {
+//                 return user.studentId
+//                   ? await apiRequest(`/attendance/my/summary?semester=sem2`)
+//                   : await apiRequest(`/attendance/${student._id}/summary?semester=sem2`);
+//               } catch {
+//                 return { summary: [] };
+//               }
+//             })()
+//           ]),
+//           apiRequest(`/quiz/available/me`),
+//           apiRequest(`/report/generated-by-me`),
+//           apiRequest(`/notification/${student._id}`)
+//         ]);
+//       })
+//       .then(([marksRes, attendanceRes, quizzesRes, reportsRes, notificationsRes]) => {
+//         let attendanceCount = 0;
+//         if (attendanceRes.status === 'fulfilled' && Array.isArray(attendanceRes.value)) {
+//           attendanceRes.value.forEach(semSummary => {
+//             if (semSummary && Array.isArray(semSummary.summary)) {
+//               attendanceCount += semSummary.summary.reduce((acc, subj) => acc + (subj.total || 0), 0);
+//             }
+//           });
+//         }
+
+//         setSummary({
+//           marks: marksRes.status === 'fulfilled' && Array.isArray(marksRes.value) ? marksRes.value.length : 0,
+//           attendance: attendanceCount,
+//           quizzes: quizzesRes.status === 'fulfilled' && Array.isArray(quizzesRes.value) ? quizzesRes.value.length : 0,
+//           reports: reportsRes.status === 'fulfilled' && Array.isArray(reportsRes.value) ? reportsRes.value.length : 0,
+//           notifications: notificationsRes.status === 'fulfilled' && Array.isArray(notificationsRes.value) ? notificationsRes.value.length : 0,
+//         });
+
+//         setPartialError([marksRes, attendanceRes, quizzesRes, reportsRes, notificationsRes].some(r => r.status !== 'fulfilled'));
+//       })
+//       .catch(() => {
+//         setStudentName(user.name || 'Student');
+//         setPartialError(true);
+//       })
+//       .finally(() => setLoading(false));
+//   }, [user]);
+
+//   return (
+//     <div className="p-4 sm:p-6 md:p-8 max-w-6xl mx-auto">
+//       <div className="mb-6 sm:mb-8 text-center">
+//         <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-primary-dark mb-4 drop-shadow">
+//           Welcome, {studentName}!
+//         </h2>
+//       </div>
+
+//       {loading && <div className="text-primary animate-pulse text-center mb-6">Loading...</div>}
+
+//       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mt-4">
+//         <DashboardCard
+//           icon={
+//             <svg className="w-8 h-8 sm:w-10 sm:h-10 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+//               <path d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m0 0H7m5 0h5" />
+//             </svg>
+//           }
+//           label="Marks"
+//           value={summary.marks}
+//           color="from-blue-500 to-blue-700"
+//           link="/student/marks"
+//         />
+
+//         <DashboardCard
+//           icon={
+//             <svg className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+//               <path d="M12 17l-5-5 5-5 5 5 5-5 5 5" />
+//             </svg>
+//           }
+//           label="Attendance"
+//           value={summary.attendance}
+//           color="from-green-500 to-green-700"
+//           link="/student/attendance"
+//         />
+
+//         <DashboardCard
+//           icon={
+//             <svg className="w-8 h-8 sm:w-10 sm:h-10 text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+//               <circle cx="12" cy="12" r="10" />
+//               <path d="M12 8v4l3 3" />
+//             </svg>
+//           }
+//           label="Quizzes"
+//           value={summary.quizzes}
+//           color="from-yellow-400 to-yellow-600"
+//           link="/student/quizzes"
+//         />
+
+//         <DashboardCard
+//           icon={
+//             <svg className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+//               <path d="M12 17l-5-5 5-5 5 5 5-5 5 5" />
+//             </svg>
+//           }
+//           label="Reports"
+//           value={summary.reports}
+//           color="from-indigo-500 to-indigo-700"
+//           link="/student/reports"
+//         />
+
+//         <DashboardCard
+//           icon={
+//             <svg className="w-8 h-8 sm:w-10 sm:h-10 text-pink-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+//               <path d="M15 17h5l-1.405-1.405M19 13V7a2 2 0 0 0-2-2h-2.586a1 1 0 0 1-.707-.293l-1.414-1.414a1 1 0 0 0-.707-.293H9a2 2 0 0 0-2 2v6" />
+//             </svg>
+//           }
+//           label="Notifications"
+//           value={summary.notifications}
+//           color="from-pink-500 to-pink-700"
+//           link="/student/notifications"
+//         />
+//       </div>
+
+//       {partialError && (
+//         <div className="mt-6 text-sm text-yellow-700 bg-yellow-100 rounded px-3 py-2 text-center max-w-md mx-auto">
+//           Some data could not be loaded, so some numbers may be incomplete.
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
